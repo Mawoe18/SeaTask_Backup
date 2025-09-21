@@ -29,7 +29,6 @@
     "date-fns": "^4.1.0",
     "expo": "53.0.22",
     "expo-blur": "~14.1.5",
-    "expo-build-properties": "~0.14.8",
     "expo-constants": "~17.1.7",
     "expo-document-picker": "~13.1.6",
     "expo-file-system": "^18.1.11",
@@ -38,8 +37,8 @@
     "expo-image": "~2.4.0",
     "expo-linking": "~7.1.7",
     "expo-mail-composer": "~14.1.6",
-    "expo-notifications": "~0.31.4",
-    "expo-router": "~5.1.5",
+    "expo-notifications": "^0.31.4",
+    "expo-router": "~5.1.6",
     "expo-sharing": "^13.1.5",
     "expo-splash-screen": "~0.30.10",
     "expo-status-bar": "~2.2.3",
@@ -50,8 +49,10 @@
     "git": "^0.1.5",
     "ical-generator": "^9.0.0",
     "lucide-react-native": "^0.525.0",
+    "metro": "0.82.0",
+    "metro-config": "0.82.0",
+    "metro-resolver": "0.82.0",
     "moment": "^2.30.1",
-    "nativewind": "4.1.23",
     "pdf-lib": "^1.17.1",
     "postcss": "^8.5.6",
     "react": "19.0.0",
@@ -61,31 +62,25 @@
     "react-native-calendars": "^1.1313.0",
     "react-native-fs": "^2.20.0",
     "react-native-gesture-handler": "~2.24.0",
-    "react-native-pdf": "^6.7.7",
+    
     "react-native-picker-select": "^9.3.1",
+    
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
-    "react-native-share": "^12.1.1",
     "react-native-signature-canvas": "^5.0.1",
     "react-native-svg": "15.11.2",
     "react-native-web": "~0.20.0",
-    "react-native-webview": "13.13.5",
-    "tailwindcss": "^3.4.17"
+    "react-native-webview": "13.13.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
-    "@types/react-native-share": "^3.3.8",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
+    "lightningcss": "^1.30.1",
     "metro-react-native-babel-preset": "^0.77.0",
     "typescript": "~5.8.3"
-  },
-  "overrides": {
-    "nativewind": {
-      "react-native-css-interop": "0.1.22"
-    }
   },
   "private": true,
   "expo": {
@@ -94,6 +89,7 @@
         "exclude": [
           "react-native-add-calendar-event",
           "react-native-fs",
+          
           "@pdf-lib/fontkit",
           "ajv",
           "ajv-keywords",
