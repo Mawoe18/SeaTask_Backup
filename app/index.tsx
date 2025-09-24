@@ -24,6 +24,91 @@ export const createPdfDirectory = async () => {
   }
 };
 
+// Define FormData interface as a union type for both forms
+export type FormData = {
+  // CybersecuritySurveyForm fields
+  organizationName?: string;
+  contactPerson?: string;
+  industry?: string;
+  seatecRepName?: string;
+  q0?: string;
+  q1?: string;
+  q2?: string;
+  q3?: string;
+  q4?: string;
+  q5?: string;
+  q6?: string;
+  q7?: string;
+  q8?: string;
+  q9?: string;
+  q10?: string;
+  q11?: string;
+  q12?: string;
+  q13?: string;
+  q14?: string;
+  q15?: string;
+  q16?: string;
+  q17?: string;
+  q18?: string;
+  // TelephonySurveyForm fields
+  customerCompanyName?: string;
+  position?: string;
+  customerAddress?: string;
+  natureOfBusiness?: string;
+  representativeName?: string;
+  phoneNo?: string;
+  dateOfSurvey?: string;
+  purposeOfSurvey?: string;
+  networkArchitectureOverview?: string;
+  poeAvailabilityAssessment?: string;
+  vlanConfiguration?: string;
+  cablingInfrastructureType?: string;
+  ipAddressingScheme?: string;
+  internetConnectivity?: string;
+  firewallCapabilities?: string;
+  telephonySolutionType?: string[];
+  totalUsersExtensions?: string;
+  userRoles?: string;
+  existingTelephonyAssessment?: string;
+  preferredPhoneTypes?: string;
+  externalTrunkRequirements?: string;
+  electricalSocketsAvailability?: string;
+  powerBackup?: string;
+  coolingVentilation?: string;
+  rackCabinetsAvailability?: string;
+  phoneLocationsMapping?: string;
+  cablingOutletsCondition?: string;
+  wifiCoverageAssessment?: string;
+  cablePathways?: string;
+  distanceEndpointsSwitches?: string;
+  pingLatencyTesting?: string;
+  testIpPhonesRegistration?: string;
+  internalCallTesting?: string;
+  externalCallTesting?: string;
+  mosEstimation?: string;
+  proposedPbxModel?: string;
+  suggestedIpPhones?: string;
+  networkEquipmentRequirements?: string;
+  structuredCablingAdjustments?: string;
+  vlanQosEnhancements?: string;
+  draftIpAddressingScheme?: string;
+  userTrainingPlans?: string;
+  observations?: string;
+  recommendations?: string;
+  seatecRepNameSig?: string;
+  [key: `addReq_${string}`]: boolean;
+  [key: `doc_${string}`]: boolean;
+};
+
+export interface FormComponentProps {
+  formData: FormData;
+  onFieldChange: (field: string, value: string | boolean) => void;
+  toggleCheckbox: (field: string, value: string) => void;
+  seatecSignature: string;
+  onShowSeatecSignatureModal: () => void;
+  onClearSeatecSignature: () => void;
+}
+
 export default function HomeScreen() {
   const router = useRouter();
 
@@ -50,7 +135,7 @@ export default function HomeScreen() {
           <View className="bg-blue-100 p-3 rounded-lg mr-4">
             <MaterialIcons name="assignment" size={24} color="#1E40AF" />
           </View>
-          <Text className="text-lg font-medium text-gray-800 flex-1 font-sans">Works Order</Text>
+          <Text className="text-lg font-medium text-gray-800 flex-1 font-sans">Support Works Order</Text>
           <MaterialIcons name="chevron-right" size={20} color="#9CA3AF" />
         </TouchableOpacity>
 
@@ -76,7 +161,7 @@ export default function HomeScreen() {
           <View className="bg-blue-100 p-3 rounded-lg mr-4">
             <MaterialIcons name="assessment" size={24} color="#1E40AF" />
           </View>
-          <Text className="text-lg font-medium text-gray-800 flex-1 font-sans">Survey</Text>
+          <Text className="text-lg font-medium text-gray-800 flex-1 font-sans">Survey Checklist</Text>
           <MaterialIcons name="chevron-right" size={20} color="#9CA3AF" />
         </TouchableOpacity>
       </View>

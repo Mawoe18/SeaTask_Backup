@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SeaTask_Project",
-    "slug": "SeaTask_Project",
+    "name": "Seatec App",
+    "slug": "Seatec_App",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/New-Logo-2.png",
@@ -24,7 +24,8 @@
     "plugins": [
       "expo-router",
       "expo-notifications",
-      "@react-native-firebase/app",[
+      "@react-native-firebase/app",
+      [
         "expo-build-properties",
         {
           "android": {
@@ -50,7 +51,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "f0bc9b76-d860-41e4-ad3a-ebcb709dad5d"
+        "projectId": "a2833d86-13f6-48d3-9bd7-14a01f6a7c61"
       }
     }
   }

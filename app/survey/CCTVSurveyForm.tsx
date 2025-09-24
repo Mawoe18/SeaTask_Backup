@@ -1,62 +1,174 @@
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { FormComponentProps, FormData } from './index';
-
+import { FormComponentProps } from './index';
+import * as FileSystem from 'expo-file-system';
+import * as MailComposer from 'expo-mail-composer';
+import * as Sharing from 'expo-sharing';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Modal } from 'react-native';
+import { generateCCTVSurveyPDF } from '../../src/pdfTemplates/CCTVSurveyTemplate';
+import { PDF_DIRECTORY, createPdfDirectory } from '../index';
 const CCTVSurveyForm = ({ 
     formData, 
     onFieldChange, 
-    toggleCheckbox,
+    toggleCheckbox, 
     seatecSignature, 
     onShowSeatecSignatureModal, 
     onClearSeatecSignature 
 }: FormComponentProps & { toggleCheckbox: (field: string, value: string) => void }) => {
-    const exportFormData = () => {
-        const exportData = {
-            organizationName: formData.organizationName || '',
-            location: formData.location || '',
-            natureOfBusiness: formData.natureOfBusiness || '',
-            intendedUse: formData.intendedUse || '',
-            floorPlanRequest: formData.floorPlanRequest || '',
-            existingCablingInfrastructure: formData.existingCablingInfrastructure || '',
-            cablingDescription: formData.cablingDescription || '',
-            ductPresence: formData.ductPresence || false,
-            laidPipes: formData.laidPipes || false,
-            trunking: formData.trunking || false,
-            existingNetworkInfrastructure: formData.existingNetworkInfrastructure || '',
-            networkDescription: formData.networkDescription || '',
-            cabinetSpace: formData.cabinetSpace || '',
-            networkScalability: formData.networkScalability || '',
-            numberOfBuildings: formData.numberOfBuildings || '',
-            buildingsNetworked: formData.buildingsNetworked || '',
-            fullCoverage: formData.fullCoverage || '',
-            areasToCover: formData.areasToCover || '',
-            fieldOfViewDescription: formData.fieldOfViewDescription || '',
-            mountingSurfaces: formData.mountingSurfaces || '',
-            ceilingHeight: formData.ceilingHeight || '',
-            obstacles: formData.obstacles || '',
-            preferredFeatures: formData.preferredFeatures || '',
-            destructiveFactors: formData.destructiveFactors || '',
-            existingEquipmentRoom: formData.existingEquipmentRoom || '',
-            rackSpaceAvailable: formData.rackSpaceAvailable || '',
-            equipmentLocationDescription: formData.equipmentLocationDescription || '',
-            monitoredFromEquipmentRoom: formData.monitoredFromEquipmentRoom || '',
-            preferredMonitoringLocation: formData.preferredMonitoringLocation || '',
-            powerDataAvailability: formData.powerDataAvailability || '',
-            preferredDisplayType: formData.preferredDisplayType || '',
-            videoRetentionDuration: formData.videoRetentionDuration || '',
-            seatecRepNameSig: formData.seatecRepNameSig || ''
-        };
-        // This data can be passed to a PDF generation function or saved to a file
-        console.log(JSON.stringify(exportData, null, 2));
-        // Add your PDF generation logic here, e.g., using a library like react-native-pdf-lib
+    const [isLoading, setIsLoading] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [pdfPath, setPdfPath] = useState<string | null>(null);
+
+    const exportFormData = async () => {
+        console.log('[CCTVSurveyForm] Export button clicked');
+        setIsLoading(true);
+
+        try {
+            // Ensure PDF directory exists
+            const dirCreated = await createPdfDirectory();
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const fileName = `CCTV_Survey_${formData.organizationName || 'Customer'}_${timestamp}.pdf`;
+            const filePath = dirCreated ? `${PDF_DIRECTORY}${fileName}` : `${FileSystem.documentDirectory}${fileName}`;
+
+            console.log('[CCTVSurveyForm] Generating PDF at path:', filePath);
+
+            // Add timeout to prevent hanging
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('PDF generation timeout - process took too long')), 60000)
+            );
+
+            // Prepare export data
+            const exportData = {
+                organizationName: formData.organizationName || '',
+                location: formData.location || '',
+                natureOfBusiness: formData.natureOfBusiness || '',
+                intendedUse: formData.intendedUse || '',
+                floorPlanRequest: formData.floorPlanRequest || '',
+                existingCablingInfrastructure: formData.existingCablingInfrastructure || '',
+                cablingDescription: formData.cablingDescription || '',
+                ductPresence: formData.ductPresence || false,
+                laidPipes: formData.laidPipes || false,
+                trunking: formData.trunking || false,
+                existingNetworkInfrastructure: formData.existingNetworkInfrastructure || '',
+                networkDescription: formData.networkDescription || '',
+                cabinetSpace: formData.cabinetSpace || false,
+                networkScalability: formData.networkScalability || false,
+                numberOfBuildings: formData.numberOfBuildings || '',
+                buildingsNetworked: formData.buildingsNetworked || '',
+                fullCoverage: formData.fullCoverage || '',
+                areasToCover: formData.areasToCover || '',
+                fieldOfViewDescription: formData.fieldOfViewDescription || '',
+                mountingSurfaces: formData.mountingSurfaces || '',
+                ceilingHeight: formData.ceilingHeight || '',
+                obstacles: formData.obstacles || '',
+                preferredFeatures: formData.preferredFeatures || '',
+                destructiveFactors: formData.destructiveFactors || '',
+                existingEquipmentRoom: formData.existingEquipmentRoom || '',
+                rackSpaceAvailable: formData.rackSpaceAvailable || '',
+                equipmentLocationDescription: formData.equipmentLocationDescription || '',
+                monitoredFromEquipmentRoom: formData.monitoredFromEquipmentRoom || '',
+                preferredMonitoringLocation: formData.preferredMonitoringLocation || '',
+                preferredDisplayType: formData.preferredDisplayType || '',
+                videoRetentionDuration: formData.videoRetentionDuration || '',
+                seatecSignature: seatecSignature || '',
+                seatecRepNameSig: formData.seatecRepNameSig || '',
+            };
+
+            // Generate PDF with timeout
+            await Promise.race([
+                generateCCTVSurveyPDF(exportData, filePath),
+                timeoutPromise
+            ]);
+
+            // Verify file was created
+            const fileInfo = await FileSystem.getInfoAsync(filePath) as { exists: boolean; size?: number };
+            if (!fileInfo.exists) {
+                throw new Error('PDF file was not created');
+            }
+
+            console.log('[CCTVSurveyForm] PDF generated successfully, file size:', fileInfo.size, 'bytes');
+            setPdfPath(filePath);
+            setShowSuccessModal(true);
+
+        } catch (error) {
+            console.error('[CCTVSurveyForm] PDF Generation failed:', error);
+            let errorMessage = 'Failed to generate the PDF. Please try again.';
+            if ((error as Error).message.includes('timeout')) {
+                errorMessage = 'PDF generation is taking too long. Please try again or contact support.';
+            }
+            Alert.alert('Error', errorMessage);
+        } finally {
+            console.log('[CCTVSurveyForm] Process completed');
+            setIsLoading(false);
+        }
+    };
+
+    const handlePreviewPdf = async () => {
+        if (pdfPath) {
+            try {
+                await Sharing.shareAsync(pdfPath, {
+                    mimeType: 'application/pdf',
+                });
+                console.log('[CCTVSurveyForm] PDF preview opened');
+                setPdfPath(null);
+                setShowSuccessModal(false);
+            } catch (error) {
+                console.error('[CCTVSurveyForm] Error previewing PDF:', error);
+                Alert.alert('Error', 'Failed to preview PDF');
+            }
+        } else {
+            Alert.alert('Error', 'No PDF available to preview');
+        }
+    };
+
+    const handleEmailPdf = async () => {
+        try {
+            const isAvailable = await MailComposer.isAvailableAsync();
+            if (!isAvailable) {
+                Alert.alert('Error', 'No email client is available on this device');
+                return;
+            }
+
+            await MailComposer.composeAsync({
+                recipients: ['support@seatectelecom.com'],
+                subject: `CCTV Survey Report - ${formData.organizationName || 'Customer'}`,
+                body: 'Please find the attached CCTV survey report PDF.',
+                attachments: pdfPath ? [pdfPath] : [],
+            });
+            console.log('[CCTVSurveyForm] Email client opened');
+            setPdfPath(null);
+            setShowSuccessModal(false);
+        } catch (error) {
+            console.error('[CCTVSurveyForm] Error opening email client:', error);
+            Alert.alert('Error', 'Failed to open email client');
+        }
+    };
+
+    const handleSavePdf = async () => {
+        if (pdfPath) {
+            try {
+                await Sharing.shareAsync(pdfPath, {
+                    dialogTitle: 'Save CCTV Survey PDF',
+                    mimeType: 'application/pdf',
+                });
+                console.log('[CCTVSurveyForm] PDF save dialog shown');
+                setPdfPath(null);
+                setShowSuccessModal(false);
+            } catch (error) {
+                console.error('[CCTVSurveyForm] Error saving PDF:', error);
+                Alert.alert('Error', 'Failed to save PDF');
+            }
+        } else {
+            Alert.alert('Error', 'No PDF available to save');
+        }
     };
 
     return (
-        <View className="bg-white rounded-lg p-4 shadow-sm">
+        <ScrollView className="bg-white rounded-lg p-4 shadow-sm" contentContainerStyle={{ paddingBottom: 180 }}>
             {/* General Information */}
             <Text className="text-lg font-bold mb-2">GENERAL INFORMATION</Text>
-            <View className="mb-4">
+            <View className="mb-3">
                 <Text className="mb-1">Name of Organization:</Text>
                 <TextInput
                     value={typeof formData.organizationName === 'string' ? formData.organizationName : ''}
@@ -65,7 +177,7 @@ const CCTVSurveyForm = ({
                     placeholder="Enter organization name"
                 />
             </View>
-            <View className="mb-4">
+            <View className="mb-3">
                 <Text className="mb-1">Location:</Text>
                 <TextInput
                     value={typeof formData.location === 'string' ? formData.location : ''}
@@ -74,7 +186,7 @@ const CCTVSurveyForm = ({
                     placeholder="Enter location"
                 />
             </View>
-            <View className="mb-4">
+            <View className="mb-3">
                 <Text className="mb-1">Nature of Business:</Text>
                 <TextInput
                     value={typeof formData.natureOfBusiness === 'string' ? formData.natureOfBusiness : ''}
@@ -83,7 +195,7 @@ const CCTVSurveyForm = ({
                     placeholder="Enter nature of business"
                 />
             </View>
-            <View className="mb-4">
+            <View className="mb-3">
                 <Text className="mb-1">Briefly Describe the Intended Use of the Solution to the Customer:</Text>
                 <TextInput
                     value={typeof formData.intendedUse === 'string' ? formData.intendedUse : ''}
@@ -93,7 +205,7 @@ const CCTVSurveyForm = ({
                     multiline
                 />
             </View>
-            <View className="mb-4">
+            <View className="mb-3">
                 <Text className="mb-1">Request for Floor Plan:</Text>
                 <TextInput
                     value={typeof formData.floorPlanRequest === 'string' ? formData.floorPlanRequest : ''}
@@ -388,7 +500,7 @@ const CCTVSurveyForm = ({
             {/* Signatures */}
             <View className="mt-6">
                 <Text className="text-lg font-bold mb-2">SIGNATURES</Text>
-                <View className="w-1/2 pl-2">
+                <View className="w-1/2 pl-4">
                     <Text className="mb-1">SEATEC REPRESENTATIVE</Text>
                     <TextInput
                         value={typeof formData.seatecRepNameSig === 'string' ? formData.seatecRepNameSig : ''}
@@ -397,7 +509,7 @@ const CCTVSurveyForm = ({
                         placeholder="Tech. Personnel"
                     />
                     <TouchableOpacity
-                        className="h-32 border-2 border-dashed border-gray-400 rounded-lg justify-center items-center bg-gray-100"
+                        className="h-40 border-2 border-dashed border-gray-400 rounded-lg justify-center items-center bg-gray-100"
                         onPress={onShowSeatecSignatureModal}
                     >
                         {seatecSignature ? (
@@ -427,7 +539,60 @@ const CCTVSurveyForm = ({
             >
                 <Text className="text-white text-lg font-bold">Export to PDF</Text>
             </TouchableOpacity>
-        </View>
+
+            {/* Success Modal */}
+            <Modal
+                visible={showSuccessModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowSuccessModal(false)}
+            >
+                <View className="flex-1 bg-black/50 justify-center items-center">
+                    <View className="bg-white p-6 rounded-2xl w-4/5 max-w-sm shadow-2xl">
+                        <Text className="text-xl font-bold text-gray-800 text-center mb-4">Success</Text>
+                        <Text className="text-gray-600 text-center mb-6">PDF generated successfully!</Text>
+                        <View className="space-y-5">
+                            <TouchableOpacity
+                                className="bg-blue-600 py-3 rounded-lg"
+                                onPress={handlePreviewPdf}
+                            >
+                                <Text className="text-white text-center font-semibold">Preview PDF</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className="bg-blue-600 py-3 rounded-lg"
+                                onPress={handleEmailPdf}
+                            >
+                                <Text className="text-white text-center font-semibold">Email PDF</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className="bg-blue-600 py-3 rounded-lg"
+                                onPress={handleSavePdf}
+                            >
+                                <Text className="text-white text-center font-semibold">Save As...</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className="bg-gray-500 py-3 rounded-lg"
+                                onPress={() => setShowSuccessModal(false)}
+                            >
+                                <Text className="text-white text-center font-semibold">Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Full-screen Loading Overlay */}
+            {isLoading && (
+                <View className="absolute inset-0 bg-black/40 justify-center items-center">
+                    <View className="bg-white p-8 rounded-2xl w-4/5 shadow-2xl">
+                        <ActivityIndicator size="large" color="#2563eb" />
+                        <Text className="mt-6 text-gray-800 text-center font-semibold text-lg">
+                            Preparing your survey document...
+                        </Text>
+                    </View>
+                </View>
+            )}
+        </ScrollView>
     );
 };
 
